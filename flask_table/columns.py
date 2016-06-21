@@ -52,9 +52,10 @@ class Col(object):
     """
 
     _counter = 0
+    _td_kwargs = {}
 
     def __init__(self, name, attr=None, attr_list=None,
-                 allow_sort=True, show=True):
+                 allow_sort=True, show=True, td_kwargs=None):
         self.name = name
         self.allow_sort = allow_sort
         self._counter_val = Col._counter
@@ -62,6 +63,8 @@ class Col(object):
         if attr:
             self.attr_list = attr.split('.')
         self.show = show
+        if td_kwargs is not None:
+            self._td_kwargs = td_kwargs
 
         Col._counter += 1
 
@@ -81,8 +84,17 @@ class Col(object):
             return out
 
     def td(self, item, attr):
-        return '<td>{}</td>'.format(
-            self.td_contents(item, self.get_attr_list(attr)))
+        kwargs = ''
+        if self._td_kwargs is not None:
+            kwargs = []
+            for key, value in self._td_kwargs.items():
+                if hasattr(value, '__call__'):
+                    value = value(item)
+                arg = '{}="{}"'.format(key, value)
+                kwargs.append(arg)
+            kwargs = ' '.join(kwargs)
+        td_contents = self.td_contents(item, self.get_attr_list(attr))
+        return '<td {}>{}</td>'.format(kwargs, td_contents)
 
     def td_contents(self, item, attr_list):
         """Given an item and an attr, return the contents of the
